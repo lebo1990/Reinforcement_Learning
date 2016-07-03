@@ -1,6 +1,5 @@
 import MDP
 import random
-
 random.seed(0)
 
 grid = MDP.MDP()
@@ -60,7 +59,7 @@ def epsilon_greedy(qfunc, state, epsilon):
 ################ Different model free RL learning algorithms #####
 
 
-def MC(num_iter1, epsilon):
+def MC(num_iter1, epsilon, max_actions=100):
     J_hist = []
     n = dict()
     qfunc = dict()
@@ -71,20 +70,24 @@ def MC(num_iter1, epsilon):
 
     for iter1 in xrange(num_iter1):
         J_hist.append(compute_error(qfunc))
-
         s_sample = []
         a_sample = []
         r_sample = []
 
         s = random.choice(states)
         t = False
+        count = 0
         while t == False:
+            if count >= max_actions:
+                print 'Counts of continuous actions over %d, MC jump out' % max_actions
+                break
             a = epsilon_greedy(qfunc, s, epsilon)
             t, s1, r = grid.transform(s, a)
             s_sample.append(s)
             r_sample.append(r)
             a_sample.append(a)
             s = s1
+            count += 1
 
         g = 0.0
         for i in xrange(len(s_sample) - 1, -1, -1):
@@ -98,5 +101,74 @@ def MC(num_iter1, epsilon):
 
             g -= r_sample[i]
             g /= gamma
+
+    return qfunc, J_hist
+
+
+def SARSA(num_iter1, alpha, epsilon, max_actions=100):
+    J_hist = []
+    qfunc = dict()
+    for s in states:
+        for a in actions:
+            key = "%d_%s" % (s, a)
+            qfunc[key] = 0.0
+
+    for iter1 in xrange(num_iter1):
+        J_hist.append(compute_error(qfunc))
+        # Arbitrary Initialization
+        s = random.choice(states)
+        a = random.choice(actions)
+        t = False
+        count = 0
+        while t == False:
+            if count >= max_actions:
+                print 'Counts of continuous actions over %d, SARSA jump out' % max_actions
+                break
+            key = "%d_%s" % (s, a)
+            t, s_next, r = grid.transform(s, a)
+            a_next = epsilon_greedy(qfunc, s_next, epsilon)
+            key_next = "%d_%s" % (s_next, a_next)
+            qfunc[key] += alpha * (r + gamma * qfunc[key_next] - qfunc[key])
+            s = s_next
+            a = a_next
+            count += 1
+
+    return qfunc, J_hist
+
+
+def QLearning(num_iter1, alpha, epsilon, max_actions=100):
+    J_hist = []
+    qfunc = dict()
+    for s in states:
+        for a in actions:
+            key = "%d_%s" % (s, a)
+            qfunc[key] = 0.0
+
+    for iter1 in xrange(num_iter1):
+        J_hist.append(compute_error(qfunc))
+        # Arbitrary Initialization
+        s = random.choice(states)
+        a = random.choice(actions)
+        t = False
+        count = 0
+        while t == False:
+            if count >= max_actions:
+                print 'Counts of continuous actions over %d, QLearning jump out' % max_actions
+                break
+            key = "%d_%s" % (s, a)
+            t, s_next, r = grid.transform(s, a)
+            # Find next action through the max of Qt(St+1, a)
+            key_next = ""
+            qmax = -1.0
+            for a_n in actions:
+                key_next0 = "%d_%s" % (s_next, a_n)
+                if qmax < qfunc[key_next0]:
+                    qmax = qfunc[key_next0]
+                    key_next = key_next0
+
+            qfunc[key] += alpha * (r + gamma * qfunc[key_next] - qfunc[key])
+            s = s_next
+            a = epsilon_greedy(qfunc, s_next, epsilon)
+            count += 1
 
     return qfunc, J_hist
