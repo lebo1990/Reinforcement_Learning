@@ -172,3 +172,15 @@ def QLearning(num_iter1, alpha, epsilon, max_actions=100):
             count += 1
 
     return qfunc, J_hist
+
+if __name__ == "__main__":
+    iterations = 5000
+    alpha = 0.2
+    epsilon = 0.2
+
+    qfunc_MC, J_hist_MC = MC(iterations, epsilon)
+    print 'MC', qfunc_MC
+    qfunc_SARSA, J_hist_SARSA = SARSA(iterations, alpha, epsilon)
+    print 'SARSA', qfunc_SARSA
+    qfunc_QLearning, J_hist_QLearning = QLearning(iterations, alpha, epsilon)
+    print 'QLearning', qfunc_QLearning

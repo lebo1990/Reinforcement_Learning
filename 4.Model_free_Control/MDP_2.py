@@ -1,18 +1,23 @@
-# Small grid world MDP 1
+# Small grid world MDP 2
 #
-#     1        2        3        4       5
-#  __________________________________________
-# |        |        |        |       |       |
-# |        |        |        |       |       |
-# |        |        |        |       |       |
-# |________|________|________|_______|_______|
-# |        |        |        |       |       |
-# |        |        |        |       |       |
-# |        |        |        |       |       |
-# |________|        |________|       |_______|
-#  6:Penalty         7:Reward         8:Penalty
-# Reward = -1       Reward = 1        Reward = -1
-# other Reward = 0
+#  __________________________
+# |        |        |        |
+# |  (7)   |  (8)   |  (9)   |
+# |        |        |  Stop  |
+# |________|________|________|
+# |        |        |        |
+# |  (4)   |  (5)   |  (6)   |
+# |        |        |        |
+# |________|________|________|
+# |        |        |        |
+# |  (1)   |  (2)   |  (3)   |
+# | Start  |        |        |
+# |________|________|________|
+# 
+# Reward(S: 1 to 8) = random.choice(-12, +10)
+# Reward(S: 9) = +5
+
+
 
 import random
 
@@ -21,33 +26,49 @@ class MDP:
 
     def __init__(self):
 
-        self.states = [1, 2, 3, 4, 5, 6, 7, 8]  # 0 indicates end
+        self.states = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # 0 indicates end
         self.terminal_states = dict()
-        self.terminal_states[6] = 1
-        self.terminal_states[7] = 1
-        self.terminal_states[8] = 1
+        self.terminal_states[9] = 1
 
         self.actions = ['n', 'e', 's', 'w']
 
         self.rewards = dict()
-        self.rewards['1_s'] = -1.0
-        self.rewards['3_s'] = 1.0
-        self.rewards['5_s'] = -1.0
+        self.rewards['6_n'] = 5.0
+        self.rewards['8_e'] = 5.0
+        
 
         self.t = dict()
-        self.t['1_s'] = 6
+        self.t['1_n'] = 4
         self.t['1_e'] = 2
-        self.t['2_w'] = 1
+
+        self.t['2_n'] = 5
         self.t['2_e'] = 3
-        self.t['3_s'] = 7
+        self.t['2_w'] = 1
+
+        self.t['3_n'] = 6
         self.t['3_w'] = 2
-        self.t['3_e'] = 4
-        self.t['4_w'] = 3
+
+        self.t['4_n'] = 7
         self.t['4_e'] = 5
-        self.t['5_s'] = 8
+        self.t['4_s'] = 1
+
+        self.t['5_n'] = 8
+        self.t['5_e'] = 6
+        self.t['5_s'] = 2
         self.t['5_w'] = 4
 
-        self.gamma = 0.8
+        self.t['6_n'] = 9
+        self.t['6_s'] = 3
+        self.t['6_w'] = 5
+
+        self.t['7_e'] = 8
+        self.t['7_s'] = 4
+
+        self.t['8_e'] = 9
+        self.t['8_s'] = 5
+        self.t['8_w'] = 7
+
+        self.gamma = 0.36
 
     def getTerminal(self):
         return self.terminal_states
@@ -76,7 +97,7 @@ class MDP:
             is_terminal = True
 
         if key not in self.rewards:
-            r = 0.0
+            r = random.choice((-12, 10))
         else:
             r = self.rewards[key]
 
