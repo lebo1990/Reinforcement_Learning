@@ -1,7 +1,7 @@
 import MDP_2
 import random
 import numpy as np
-random.seed(0)
+#random.seed(0)
 
 grid = MDP_2.MDP()
 states = grid.getStates()
@@ -60,12 +60,14 @@ def QLearning(num_iterations, alpha = [0, 1]):
     Outputs:
     - max_qfunc_hist: maximum of the Q for every iteration
     - reward_hist: Reward for every iteration
+    - track: accumulated N(s, a)
 
     """
     max_qfunc_hist = []
     reward_hist = []
     state_hist = {}
     qfunc = {}
+    track = {}
     
     for si in states:
         for ai in actions:
@@ -80,12 +82,11 @@ def QLearning(num_iterations, alpha = [0, 1]):
         a = random.choice(actions)
         t = False
         r_hist = []
-        track = {}
+        
         for si in states:
             for ai in actions: 
                 key = "%d_%s" % (si, ai)
                 track[key] = 0.0
-        track["1_%s" % a] += 1
 
         while t == False:
             key = "%d_%s" % (s, a)
@@ -93,10 +94,10 @@ def QLearning(num_iterations, alpha = [0, 1]):
             r_hist.append(r)
             # Find next action through the max of Qt(St+1, a)
             qmax = min(qfunc.values())
-            key_next = qfunc.keys()[qfunc.values().index(qmax)]
+            key_next = ''
             for a_n in actions:
                 key_next0 = "%d_%s" % (s_next, a_n)
-                if qmax < qfunc[key_next0]:
+                if qmax <= qfunc[key_next0]:
                     qmax = qfunc[key_next0]
                     key_next = key_next0
 
@@ -111,9 +112,14 @@ def QLearning(num_iterations, alpha = [0, 1]):
             s = s_next
             
         reward_hist.append(np.mean(r_hist))
-        max_qfunc_hist.append(max(qfunc.values()))
+        q1_a = []
+        for ai in actions:
+            key = "1_%s" % ai
+            q1_a.append(qfunc[key])
 
-    return max_qfunc_hist, reward_hist
+        max_qfunc_hist.append(max(q1_a))
+
+    return max_qfunc_hist, reward_hist, track
 
 
 def Double_QLearning(num_iterations, alpha = [0, 1]):
@@ -131,6 +137,7 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
     Outputs:
     - max_qfunc_hist: maximum of the Q for every iteration
     - reward_hist: Reward for every iteration
+    - track: accumulated N(s, a)
 
     """
     max_qfunc_hist = []
@@ -138,6 +145,7 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
     state_hist = {}
     qfunc_a = {}
     qfunc_b = {}
+    track = {}
     
     for si in states:
         for ai in actions:
@@ -153,12 +161,11 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
         a = random.choice(actions)
         t = False
         r_hist = []
-        track = {}
+        
         for si in states:
             for ai in actions: 
                 key = "%d_%s" % (si, ai)
                 track[key] = 0.0
-        track["1_%s" % a] += 1
 
         while t == False:
             key = "%d_%s" % (s, a)
@@ -166,10 +173,7 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
             r_hist.append(r)
             # Find next action through the max of Qt(St+1, a)
             qmax = min(qfunc_a.values() + qfunc_b.values())
-            if min(qfunc_a.values()) < min(qfunc_b.values()):
-                key_next = qfunc_a.keys()[qfunc_a.values().index(qmax)]
-            else:
-                key_next = qfunc_b.keys()[qfunc_b.values().index(qmax)]
+            key_next = ''            
 
             track[str(s) + '_' + a] += 1
             if alpha[0] != 0:
@@ -182,7 +186,7 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
             if Q_choice < 0.5:
                 for a_n in actions:
                     key_next0 = "%d_%s" % (s_next, a_n)
-                    if qmax < qfunc_a[key_next0]:
+                    if qmax <= qfunc_a[key_next0]:
                         qmax = qfunc_a[key_next0]
                         key_next = key_next0
                 qfunc_a[key] += LR * \
@@ -192,7 +196,7 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
             else:
                 for a_n in actions:
                     key_next0 = "%d_%s" % (s_next, a_n)
-                    if qmax < qfunc_b[key_next0]:
+                    if qmax <= qfunc_b[key_next0]:
                         qmax = qfunc_b[key_next0]
                         key_next = key_next0
                 qfunc_b[key] += LR * \
@@ -203,14 +207,20 @@ def Double_QLearning(num_iterations, alpha = [0, 1]):
             s = s_next
 
         reward_hist.append(np.mean(r_hist))
-        max_qfunc_hist.append(max(qfunc_a.values() + qfunc_b.values()))
+        q1_a = []
+        for ai in actions:
+            key = "1_%s" % ai
+            q1_a.append(qfunc_a[key])
+            q1_a.append(qfunc_b[key])
 
-    return max_qfunc_hist, reward_hist
+        max_qfunc_hist.append(max(q1_a))
+
+    return max_qfunc_hist, reward_hist, track
 
 if __name__ == "__main__":
     
-    max_qfunc_hist_Q, reward_Q = QLearning(100, alpha = [0, 1])
-    max_qfunc_hist_Double_Q, reward_Double_Q = Double_QLearning(1000, alpha = [0, 1])
+    max_qfunc_hist_Q, reward_Q, track_Q = QLearning(10000, alpha = [0, 1])
+    max_qfunc_hist_Double_Q, reward_Double_Q, track_Double_Q = Double_QLearning(10000, alpha = [0, 1])
 
     print 'QLearning:'
     print 'max Q:', max_qfunc_hist_Q
